@@ -23,7 +23,7 @@ class PoissonBinomialParallel:
         sum_pmf = np.apply_along_axis(lambda m: np.convolve(m,poisson_pmf,mode='full'),axis=0,arr=binom_pmf)
         sum_pmf /= np.sum(sum_pmf, axis=0, keepdims=True)
         start = time.time()
-        log_like = np.sum(np.log(1e-8+sum_pmf[self.x,:,:]),axis=0) #slow but O(n)
+        log_like = np.sum(np.log(1e-8+sum_pmf[self.x,:,:]),axis=0)
         end = time.time()
         #print(end-start)
         return log_like
