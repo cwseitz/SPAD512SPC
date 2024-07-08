@@ -1,0 +1,6 @@
+README.md
+setup.py
+SPAD512SPC.egg-info/PKG-INFO
+SPAD512SPC.egg-info/SOURCES.txt
+SPAD512SPC.egg-info/dependency_links.txt
+SPAD512SPC.egg-info/top_level.txt
