@@ -13,14 +13,13 @@ def compute_sigma(G20,G2m,numm,B):
     sigma = np.linalg.norm(sigma)
     return sigma
 
-def coincidence_ratio(stack,dt=1e-3,B=0.0):
+def coincidence_ratio(counts,B=0.0):
     ms = np.arange(1,100,1)
-    spac_sum = np.sum(stack,axis=(1,2))
-    G20 = np.sum(spac_sum > 1)
+    G20 = np.sum(counts > 1)
     G2ms = []
     for m in ms:
-        rolled = np.roll(spac_sum,m)
-        G2m = np.sum(spac_sum*rolled >= 1)
+        rolled = np.roll(counts,m)
+        G2m = np.sum(counts*rolled >= 1)
         G2ms.append(G2m)
     G2ms = np.array(G2ms)
     G2m = np.mean(G2ms)
@@ -28,25 +27,4 @@ def coincidence_ratio(stack,dt=1e-3,B=0.0):
     g20 = (G20-B)/(G2m-B)
     sigma = compute_sigma(G20,G2m,len(ms),B)
     return g20,sigma
-
-"""
-def coincidence_ratio_batch(stack,patchw=5,plot=False):
-    time_sum = np.sum(stack,axis=0)
-    med = median_filter(time_sum/time_sum.max(),size=2)
-    det = blob_log(med,threshold=0.01,min_sigma=1,max_sigma=5,
-                   num_sigma=5,exclude_border=True)
-    ndet,_ = det.shape; ratios = []
-    for n in range(ndet):
-        x,y,_ = det[n]
-        x = int(x); y = int(y)
-        patch = stack[:,x-patchw:x+patchw,y-patchw:y+patchw]
-        r = coincidence_ratio(patch)
-        ratios.append(r)
-        if plot:
-            fig,ax=plt.subplots(1,2)
-            ax[0].imshow(patch)
-            ax[1].plot(np.sum(patch,axis=(1,2)))
-            ax[0].set_title(f'Coincidence ratio: {r}')
-            plt.show()
-"""
 

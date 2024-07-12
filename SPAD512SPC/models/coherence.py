@@ -47,12 +47,11 @@ def linear_interpolation(image):
         if row > 0 and row < nx-1 and col > 0 and col < ny-1:
             image[row, col] = (image[row+1, col]+image[row-1, col]+image[row, col+1]+image[row, col-1])/4
         else:
-            image[row,col] = 1.0
-    image = np.pad(image,((0,1),(0,1)),mode='constant')
-    image[-1,:] = 1.0; image[:,-1] = 1.0
+            image[row,col] = 0.0
+    image = image[1:-1,1:-1]
     return image
     
-def G2(adu):
+def correlate(adu):
 
     nt,nx,ny = adu.shape
     adu = adu.astype(np.float64)
@@ -67,11 +66,6 @@ def G2(adu):
     fft = fft[:,:,np.newaxis]
     fftc = fftc[:,np.newaxis,:]
     corr = np.fft.ifft(fft*fftc,axis=0)
-    fig,ax=plt.subplots(1,3,sharex=True,sharey=True)
-    ax[0].imshow(np.real(corr[0]),vmin=0.0,vmax=1.0)
-    ax[1].imshow(np.real(corr[200]),vmin=0.0,vmax=1.0)
-    ax[2].imshow(np.real(corr[10000]),vmin=0.0,vmax=1.0)
-    plt.show()
     _Exy = np.real(corr)/nt #take zero lag
 
     Exy = np.zeros((nt,2*nx-1,2*nx-1),dtype=np.float64)
@@ -92,6 +86,7 @@ def G2(adu):
     #ExEy[Dind[0],Dind[1]] = _ExEy[Ed[0],Ed[1]]
     ExEy[Dind[0],Dind[1]] = 0.0
     #g2 = linear_interpolation(Exy[0]/(ExEy+1e-14))
-    g2 = Exy[0]
+    out = linear_interpolation(Exy[0])
+    #g2 = Exy[0]
     
-    return g2
+    return out

@@ -2,8 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage.feature import blob_log
 from scipy.ndimage import median_filter
+from scipy import stats
 from SPAD512SPC.utils import IntensityReaderSparse
-from SPAD512SPC.models import PoissonBinomialParallel
+from SPAD512SPC.models import PoissonBinomialParallel, coincidence_ratio
+
 
 class Pipeline: 
     def __init__(self,basepath,acqs):
@@ -32,19 +34,43 @@ class Pipeline:
             patches.append(patch)
         return np.array(patches)
     def detect_and_read(self,summ,threshold=0.0005,patchw=2):
-        det = self.detect(summ,threshold=threshold)
+        coords = self.detect(summ,threshold=threshold)
         w = 2*patchw + 1
-        ndet,_ = det.shape
+        ndet,_ = coords.shape
         stack = []
         for this_acq in self.acqs:
             print('Reading: ' + this_acq)
             reader = IntensityReaderSparse(self.basepath+this_acq)
             generator = reader.read_1bit_sparse_frames()
             for frame in generator:
-                stack.append(self.extract_patches(frame,det))
+                stack.append(self.extract_patches(frame,coords))
             del reader
         stack = np.array(stack)
-        return stack,det
+        return stack,coords
+    def read_frames(self,coords,max_frames=None):
+        stack = []
+        for this_acq in self.acqs:
+            print('Reading: ' + this_acq)
+            reader = IntensityReaderSparse(self.basepath+this_acq)
+            generator = reader.read_1bit_sparse_frames()
+            n = 0
+            for frame in generator:
+                print(f'Reading frame {n}')
+                if max_frames is not None:
+                    if n > max_frames:
+                        break
+                stack.append(self.extract_patches(frame,coords))
+                n += 1
+            del reader
+        stack = np.array(stack)
+        return stack
+    def coincidence(self,counts,B=37.5,conf_thres=0.5):
+        g20,sigma = coincidence_ratio(counts,B=B)
+        conf = stats.norm.cdf(conf_thres,loc=g20,scale=sigma)
+        g20 = np.round(g20,2)
+        sigma = np.round(sigma,2)
+        conf = np.round(conf,2)
+        return g20,sigma,conf
     def post(self,counts,Nmax=20,zeta_mean=0.01,zeta_std=0.005,
                 lambd=0.01,num_samples=100,nbatches=50):
                 

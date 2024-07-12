@@ -29,7 +29,7 @@ class PoissonBinomialParallel:
         return log_like
 
     def gaussian_prior(self, zeta_values):
-        return norm.pdf(zeta_values, loc=self.zeta_mean, scale=self.zeta_std)
+        return norm.pdf(zeta_values,loc=self.zeta_mean,scale=self.zeta_std)
 
     def integrate(self, num_samples, N_values, approx=False):
         zeta_samples = np.random.normal(self.zeta_mean, self.zeta_std, size=num_samples)
