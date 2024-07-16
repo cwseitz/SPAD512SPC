@@ -5,7 +5,8 @@ from scipy.ndimage import median_filter
 from scipy import stats
 from SPAD512SPC.utils import IntensityReaderSparse
 from SPAD512SPC.models import PoissonBinomialParallel, coincidence_ratio
-
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from SPAD512SPC.psf.psf2d.mix import MixMCMC
 
 class Pipeline: 
     def __init__(self,basepath,acqs):
@@ -71,7 +72,7 @@ class Pipeline:
         sigma = np.round(sigma,2)
         conf = np.round(conf,2)
         return g20,sigma,conf
-    def post(self,counts,Nmax=20,zeta_mean=0.01,zeta_std=0.005,
+    def get_post(self,counts,Nmax=20,zeta_mean=0.01,zeta_std=0.005,
                 lambd=0.01,num_samples=100,nbatches=50):
                 
         Ns = np.arange(1,Nmax,1)
@@ -88,4 +89,45 @@ class Pipeline:
         posts = np.array(posts)
         avg_post = np.mean(posts,axis=0)
         return avg_post
+    def plot_post(self,Ns,avg_post,patch_sum):
+        fig,ax=plt.subplots(figsize=(3,3))
+        ax.bar(Ns,avg_post,color='white',edgecolor='black')
+        ax_inset = inset_axes(ax,width="40%",
+                              height="40%",loc='upper right')
+        ax.set_xlim([0,10])
+        ax.set_xticks(np.arange(0,10,2))
+        ax.set_xlabel(r'$N$')
+        ax.set_ylabel(r'$p(N|n)$')
+        ax.set_yticks([])
+        ax.spines[['right','top']].set_visible(False)
+        ax_inset.imshow(patch_sum,cmap='gray')
+        ax_inset.set_xticks([])
+        ax_inset.set_yticks([])
+        plt.tight_layout()    
+    def post(self,counts,Ns,lambd=0.0075,plot=False):
+        avg_post = self.get_post(counts,lambd=lambd)
+        Nmap = np.argmax(avg_post)+1
+        model = PoissonBinomialParallel(None,lambd=lambd,
+                                        zeta_mean=None,
+                                        zeta_std=None)
+        return avg_post,Nmap
+        
+    def fit(self,adu,Nmap,muB,sigma=0.8,
+            N0=5000,max_components=5,plot=False):
+        adu = np.clip(adu-muB,0,None)
+        adu = np.pad(adu,((2,2),(2,2)))
+        nx,ny = adu.shape
+        theta0 = np.array([nx/2,nx/2])
+        theta0 = np.repeat(theta0[None,:],Nmap,axis=0).flatten()
+        sampler = MixMCMC(theta0,adu,sigma=sigma,N0=N0)
+        samples = sampler.run_mcmc(plot_fit=True)
+        samples = samples[:,:2]
+        theta_est = sampler.find_modes_dpgmm(samples,max_components=max_components)
+        if plot:
+            fig,ax=plt.subplots(figsize=(3,3))
+            ax.scatter(theta_est[:,0],theta_est[:,1],color='red')
+            ax.invert_yaxis()
+            ax.imshow(adu,cmap='gray')
+            ax.set_xticks([]); ax.set_yticks([])
+        return theta_est
 

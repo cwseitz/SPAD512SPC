@@ -22,11 +22,16 @@ class PoissonBinomialParallel:
         poisson_pmf = poisson.pmf(np.arange(0,max_cts+1),self.lambd)
         sum_pmf = np.apply_along_axis(lambda m: np.convolve(m,poisson_pmf,mode='full'),axis=0,arr=binom_pmf)
         sum_pmf /= np.sum(sum_pmf, axis=0, keepdims=True)
-        start = time.time()
         log_like = np.sum(np.log(1e-8+sum_pmf[self.x,:,:]),axis=0)
-        end = time.time()
-        #print(end-start)
         return log_like
+
+    def pmf(self,N,zeta,max_cts=10):
+        x = np.arange(0,max_cts+1)
+        binom_pmf = binom.pmf(x,N,zeta)
+        poisson_pmf = poisson.pmf(x,self.lambd)
+        sum_pmf = np.convolve(binom_pmf,poisson_pmf,mode='full')
+        sum_pmf /= np.sum(sum_pmf)
+        return sum_pmf
 
     def gaussian_prior(self, zeta_values):
         return norm.pdf(zeta_values,loc=self.zeta_mean,scale=self.zeta_std)

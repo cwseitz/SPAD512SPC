@@ -39,7 +39,7 @@ class SPAD2D_Ring:
         x = self.get_counts(theta)
         if show:
             self.show(theta,x)
-        return x
+        return x,theta
         
     def add_signal(self,prob,x_signal):
         """Distribute photons over space"""
@@ -104,5 +104,46 @@ class SPAD2D_Ring:
         ax[0].invert_yaxis()
         plt.tight_layout()
 
+class Ring2D:
+    def __init__(self,config):
+        super().__init__()
+        self.config = config
+
+    def _mu(self,theta,npixels,patch_hw=3):
+        x = np.arange(0,2*patch_hw); y = np.arange(0,2*patch_hw)
+        X,Y = np.meshgrid(x,y)
+        srate = np.zeros((npixels,npixels),dtype=np.float32)
+        for n in range(self.config['particles']):
+            x0,y0,sigma,N0 = theta[:,n]
+            patchx, patchy = int(round(x0))-patch_hw, int(round(y0))-patch_hw
+            x0p = x0-patchx; y0p = y0-patchy
+            lam = lamx(X,x0p,sigma)*lamy(Y,y0p,sigma)
+            mu = N0*lam
+            srate[patchx:patchx+2*patch_hw,patchy:patchy+2*patch_hw] += mu
+        return srate
+
+    def ring(self,n,radius=3,phase=0):
+        thetas = np.arange(0,n,1)*2*np.pi/n
+        xs = radius*np.cos(thetas+phase)
+        ys = radius*np.sin(thetas+phase)
+        return xs,ys
+
+    def forward(self,show=False,patch_hw=3,ring_radius=10,muB=150.0):
+        theta = np.zeros((4,self.config['particles']))
+        nx,ny = self.config['nx'],self.config['ny']
+        xsamp,ysamp = self.ring(self.config['particles'],radius=ring_radius)
+        x0 = nx/2; y0 = ny/2
+        theta[0,:] = xsamp + x0
+        theta[1,:] = ysamp + y0
+        theta[2,:] = self.config['sigma']
+        theta[3,:] = self.config['N0']
+        muS = self._mu(theta,self.config['nx'],patch_hw=patch_hw)
+        muB = muB*np.ones_like(muS)
+        adu = self.shot_noise(muS) + self.shot_noise(muB)
+        return adu
+
+    def shot_noise(self,rate):
+        adu = np.random.poisson(lam=rate)
+        return adu
 
 

@@ -20,4 +20,3 @@ def crlb2d(theta,sigma,cmos_params):
        for m in range(ntheta):
            I[n,m] = np.sum(J[n]*J[m]/muprm)
     return np.sqrt(np.diagonal(inv(I)))
-
