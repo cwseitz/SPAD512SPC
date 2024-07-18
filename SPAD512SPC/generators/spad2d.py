@@ -14,7 +14,7 @@ from scipy.special import factorial
 from scipy.stats import bernoulli,poisson
 
 from ..utils import *
-from SPAD512SPC.psf.psf2d.psf2d import *
+from miniSMLM.psf.psf2d.psf2d import *
 
 class SPAD2D_Ring:
     """Simulates a small ROI of a 2D spad array 
@@ -104,7 +104,7 @@ class SPAD2D_Ring:
         ax[0].invert_yaxis()
         plt.tight_layout()
 
-class Ring2D:
+class Disc2D:
     def __init__(self,config):
         super().__init__()
         self.config = config
@@ -122,16 +122,17 @@ class Ring2D:
             srate[patchx:patchx+2*patch_hw,patchy:patchy+2*patch_hw] += mu
         return srate
 
-    def ring(self,n,radius=3,phase=0):
-        thetas = np.arange(0,n,1)*2*np.pi/n
-        xs = radius*np.cos(thetas+phase)
-        ys = radius*np.sin(thetas+phase)
-        return xs,ys
+    def disc(self,n,radius=3):
+        theta = np.random.uniform(0,2*np.pi,n)
+        radius = np.random.uniform(0,radius,n)
+        x = radius*np.cos(theta)
+        y = radius*np.sin(theta)
+        return x,y
 
-    def forward(self,show=False,patch_hw=3,ring_radius=10,muB=150.0):
+    def forward(self,show=False,patch_hw=3,radius=10,muB=150.0):
         theta = np.zeros((4,self.config['particles']))
         nx,ny = self.config['nx'],self.config['ny']
-        xsamp,ysamp = self.ring(self.config['particles'],radius=ring_radius)
+        xsamp,ysamp = self.disc(self.config['particles'],radius=radius)
         x0 = nx/2; y0 = ny/2
         theta[0,:] = xsamp + x0
         theta[1,:] = ysamp + y0
@@ -140,7 +141,7 @@ class Ring2D:
         muS = self._mu(theta,self.config['nx'],patch_hw=patch_hw)
         muB = muB*np.ones_like(muS)
         adu = self.shot_noise(muS) + self.shot_noise(muB)
-        return adu
+        return adu,theta
 
     def shot_noise(self,rate):
         adu = np.random.poisson(lam=rate)
