@@ -20,7 +20,7 @@ def run_simulation(N, N0, config, iters=100):
     config['N0'] = N0
     for n in range(iters):
         generator = Disc2D(10,10)
-        adu, spikes, theta_true = generator.forward(1.0, N, **config, show=False)
+        adu, spikes, theta_true = generator.forward(2.0, N, **config, show=False)
         theta_true = np.squeeze(theta_true)[:2]
         adu = np.clip(adu - config['B0'], 0, None)
         theta0 = np.array([5.0, 5.0])
@@ -37,7 +37,7 @@ def run_simulation(N, N0, config, iters=100):
         yerrs += list(yerr)
     return np.std(xerrs), np.std(yerrs)
 
-N_values = [3]
+N_values = [2]
 N0_values = [5000]
 iters = 100
 

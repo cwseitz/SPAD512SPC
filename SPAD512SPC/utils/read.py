@@ -15,6 +15,7 @@ class IntensityReaderSparse:
     def read_1bit_summed(self,globstr='RAW*',dummy=262144):
         summed = np.zeros((512*512,))
         files = sorted(glob(self.path+globstr))
+        print(self.path+globstr)
         for f in files:
             print('Reading: ' + f)
             bytes = np.fromfile(f,dtype='uint32')
@@ -67,6 +68,7 @@ class IntensityReader:
         for file in files:
             byte = np.fromfile(file, dtype='uint8')
             bits = np.unpackbits(byte)
+            nframes = len(bits) // 512**2
             bits = np.array(np.split(bits, nframes))
             bits = bits.reshape((nframes, 512, 512)).swapaxes(1, 2)
             bits = np.flip(bits, axis=1)

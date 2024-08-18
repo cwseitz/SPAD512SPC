@@ -6,7 +6,7 @@ from scipy import stats
 from SPAD512SPC.utils import IntensityReaderSparse
 from SPAD512SPC.models import PoissonBinomialParallel, coincidence_ratio
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from SPAD512SPC.psf.psf2d.mix import MixMCMC
+from miniSMLM.psf.psf2d.mix import MixMCMC
 
 class Pipeline: 
     def __init__(self,basepath,acqs):
@@ -18,7 +18,7 @@ class Pipeline:
                        num_sigma=5,exclude_border=True)
         det = det[:,:2]
         if show:
-            plt.imshow(med,cmap='gray',vmin=0,vmax=0.005)
+            plt.imshow(med,cmap='gray',vmin=0,vmax=0.03)
             plt.scatter(det[:,1],det[:,0],marker='x',s=3,color='red')
             plt.show()
         print(f'Num detections: {det.shape[0]}')
@@ -66,12 +66,12 @@ class Pipeline:
         stack = np.array(stack)
         return stack
     def coincidence(self,counts,B=37.5,conf_thres=0.5):
-        g20,sigma = coincidence_ratio(counts,B=B)
+        g20,sigma,G20,G2ms = coincidence_ratio(counts,B=B)
         conf = stats.norm.cdf(conf_thres,loc=g20,scale=sigma)
         g20 = np.round(g20,2)
         sigma = np.round(sigma,2)
         conf = np.round(conf,2)
-        return g20,sigma,conf
+        return g20,sigma,conf,G20,G2ms
     def get_post(self,counts,Nmax=20,zeta_mean=0.01,zeta_std=0.005,
                 lambd=0.01,num_samples=100,nbatches=50):
                 

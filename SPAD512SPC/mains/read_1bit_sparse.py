@@ -4,19 +4,16 @@ import matplotlib.pyplot as plt
 
 config = {
 'path': '',
-'savepath': '/research2/shared/cwseitz/Data/SPAD/240702/data/intensity_images_2/',
+'savepath': '/research3/shared/cwseitz/Data/SPAD/240817/data/intensity_images/',
 'prefix': ''
 }
 
-base_prefix = '240702_SPAD-QD-500kHz-100k-1us-1bit-'
-base_path = '/research2/shared/cwseitz/Data/SPAD/240702/data/intensity_images_2/'
+base_prefix = '240817_SPAD-QD-500kHz-100k-50ns-1bit-'
+base_path = '/research3/shared/cwseitz/Data/SPAD/240817/data/intensity_images/'
 
 acqs = [
-'acq00003',
-'acq00004',
-'acq00005',
-'acq00006',
-'acq00007'
+'acq00000',
+'acq00001'
 ]
 
 for n,acq in enumerate(acqs):
@@ -25,7 +22,7 @@ for n,acq in enumerate(acqs):
     prefix = base_prefix + acqn
     config['path'] = path
     config['prefix']  = prefix
-    reader = IntensityReaderSparse(config)
+    reader = IntensityReaderSparse(path)
     summed = reader.read_1bit_summed()
     imsave(config['savepath']+base_prefix+acqn+'-sum.tif',summed)
     del summed

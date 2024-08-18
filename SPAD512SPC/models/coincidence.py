@@ -14,7 +14,7 @@ def compute_sigma(G20,G2m,numm,B):
     return sigma
 
 def coincidence_ratio(counts,B=0.0):
-    ms = np.arange(1,100,1)
+    ms = np.arange(-50,50,1)
     G20 = np.sum(counts > 1)
     G2ms = []
     for m in ms:
@@ -26,5 +26,5 @@ def coincidence_ratio(counts,B=0.0):
     #G20 = np.max([G20,B])
     g20 = (G20-B)/(G2m-B)
     sigma = compute_sigma(G20,G2m,len(ms),B)
-    return g20,sigma
+    return g20,sigma,G20,G2ms
 

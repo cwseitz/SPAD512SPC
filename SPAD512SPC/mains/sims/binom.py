@@ -20,7 +20,8 @@ class BinomialPoissonSimulation:
         avgG20 = nframes*self.prob_bi_greater_than_or_equal_two(ns,zeta)
         avgG2m = nframes*self.prob_bim_greater_than_or_equal_two(ns,zeta)
         return (avgG20-B)/(avgG2m-B)
-    def post(self,x,ns,nbatches=50,lamb=0.0075,zeta_mean=0.01,zet_std=0.005):
+    def post(self,x,ns,nbatches=50,lamb=0.0075,
+             zeta_mean=0.01,zeta_std=0.005,num_samples=1000):
         x = np.split(x,nbatches)
         posts = []
         for n,this_x in enumerate(x):
@@ -34,42 +35,18 @@ class BinomialPoissonSimulation:
         posts = np.array(posts)
         avg_post = np.mean(posts,axis=0)
         return avg_post
-    def run_simulation(self,zeta,ns,nframes,lamb=0.0075,iters=100):
+    def run_simulation_g20(self,zeta,ns,nframes,lamb=0.0075,iters=50):
         all_g20s = []; all_sigmas = []
         for i in range(iters):
             print(f'Iteration {i}')
             g20s = []; sigmas = []
             for n in ns:
                 x = self.sample(n,zeta,nframes,lamb=lamb)
-                g20,sigma = coincidence_ratio(x,B=nframes*lamb*zeta)
+                g20,sigma,_,_ = coincidence_ratio(x,B=nframes*lamb*zeta)
                 g20s.append(g20); sigmas.append(sigma)
             all_g20s.append(np.array(g20s))
             all_sigmas.append(np.array(sigmas))
         avg_g20 = np.mean(all_g20s,axis=0)
         avg_sigma = np.mean(all_sigmas,axis=0)
         return avg_g20,avg_sigma
-
-
-zetas = [0.015, 0.03, 0.05]
-ns = np.arange(1,10,1)
-nframes = 100000
-lamb = 0.0075
-colors = ['red','blue','lime']
-
-fig,ax=plt.subplots(figsize=(4,2.5))
-for n,zeta in enumerate(zetas):
-    sim = BinomialPoissonSimulation()
-    #tavg = sim.avg_g20(ns,zeta,lamb,nframes=nframes) #theory
-    avg_g20,avg_sigma = sim.run_simulation(zeta,ns,nframes,lamb=lamb)
-    ax.errorbar(ns,avg_g20,avg_sigma,capsize=5,markersize=3, 
-                marker='o',ls='none',color=colors[n],
-                label=rf'$\zeta={zeta}$')
-    #ax.plot(ns,tavg,color=colors[n]) #theory
-    ax.set_xticks([2,4,6,8,10])
-    ax.set_xlabel('Number of Flurophores (N)')
-    ax.set_ylabel(r'$g^{(2)}(0)$')
-    ax.legend()
-    plt.tight_layout()
-plt.savefig('/home/cwseitz/Desktop/Figure-1.png', dpi=300)
-plt.show()
 
